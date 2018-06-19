@@ -25,45 +25,57 @@ def integrate_LeapFrog(U, P, trajL, MDsteps, action):
         P = update_P(U, P, p_eps, action)
     return U, P
 
-def cal_H(U, P, action, before_after):
+def cal_H(U, P, action, before_after, f=None):
     Hp = - np.sum(trace(np.matmul(P, P))).real
     Hs = action.S(U)
     H0 = Hp + Hs
     if before_after==0:
-        print("Before traj: Hp: ", Hp, "\tS: ", Hs, "\tTotal H: ", H0)
+        # print("Before traj: Hp: ", Hp, "\tS: ", Hs, "\tTotal H: ", H0)
+        f.write("Before traj: Hp: " + str(Hp) + "\tS: "+str(Hs) + "\tTotal H: "+str(H0)+'\n')
     else:
-        print("After traj: Hp: ", Hp, "\tS: ", Hs, "\tTotal H: ", H0)
+        # print("After traj: Hp: ", Hp, "\tS: ", Hs, "\tTotal H: ", H0)
+        f.write("After traj: Hp: " + str(Hp) + "\tS: "+str(Hs) + "\tTotal H: "+str(H0)+'\n')
     return H0
 
 def HMC(U, trajN, trajL, MDsteps, action):
+    f = open(action.log_file, 'w+')
     for traj in range(trajN):
-        print("traj: ", traj)
+        # print("traj: ", traj)
+        f.write("traj: "+str(traj) + '\n')
         P = generate_P(U.shape[1:5])
 
-        H0 = cal_H(U, P, action, 0)
+        # H0 = cal_H(U, P, action, 0)
+        H0 = cal_H(U, P, action, 0, f)
 
         newU, newP = integrate_LeapFrog(U, P, trajL, MDsteps, action)
 
-        H1 = cal_H(newU, newP, action, 1)
+        # H1 = cal_H(newU, newP, action, 1)
+        H1 = cal_H(newU, newP, action, 1, f)
         deltaH = H1 - H0
-        print("delta H: ", deltaH)
+        # print("delta H: ", deltaH)
+        f.write("delta H: "+str(deltaH)+ '\n')
 
         ave = 0
 
         if action.name == "GFAction":
             g = coldConfiguration(U.shape[1:])
             g = GF_heatbath(U, g, action.betaMM, action.hb_offset, action.hb_multi_hit)
-            for i in range(action.innerMC_N):
+            for i in range(action.innerMC_N_H):
                 tt = deltaH + action.betaMM * (Omega_g(newU, g) - Omega_g(U, g))
                 ave += np.exp(tt)
                 if i%30==0:
-                    print("DeltaH tt: ", tt)
+                    # print("DeltaH tt: ", tt)
+                    f.write("DeltaH tt: "+str(tt)+ '\n')
                 g = GF_heatbath(U, g, action.betaMM, 1, action.hb_multi_hit)
-
-        print("averafe: ", np.log(ave/action.innerMC_N))
+            # print("average: ", np.log(ave/action.innerMC_N_H))
+            f.write("average: "+str(np.log(ave/action.innerMC_N_H))+ '\n')
 
         # always accept
         U = newU
 
-        print("plaq: ", plaq_cal(newU))
-        print('-'*50)
+        # print("plaq: ", plaq_cal(newU))
+        # print('-'*50)
+        f.write("plaq: " + str(plaq_cal(newU))+ '\n')
+        f.write('-'*50 + '\n')
+
+        f.close()
