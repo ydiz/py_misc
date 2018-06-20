@@ -15,14 +15,40 @@ def update_P(U, P, eps, action):
     return newP
 
 def integrate_LeapFrog(U, P, trajL, MDsteps, action):
+    f = open(action.log_file, 'w+') # test
+    U0 = np.copy(U)
+    g = coldConfiguration(U.shape[1:])
+    g = GF_heatbath(U0, g, action.betaMM, action.hb_offset, action.hb_multi_hit) # g is generated only once
+    H0 = cal_H(U0, P, action, 0, f) # test
+
     eps = trajL / MDsteps
     for i in range(MDsteps):
+        ave = 0
+        f.write("MDstep: "+str(i) + '\n') # test
         if i==0:
             P = update_P(U, P, eps/2.0, action)
             # print(P)
         U = update_U(U, P, eps)
         p_eps = eps if i!= MDsteps-1 else eps/2.0
         P = update_P(U, P, p_eps, action)
+
+        H1 = cal_H(U, P, action, 1, f) # test
+        deltaH = H1 - H0
+        f.write("delta H: "+str(deltaH)+ '\n')
+
+        for i in range(action.innerMC_N_H):
+            tt = deltaH + action.betaMM * (Omega_g(U, g) - Omega_g(U0, g))
+            ave += np.exp(tt)
+            if i%30==0:
+                # print("DeltaH tt: ", tt)
+                f.write("DeltaH tt: "+str(tt)+ '\n')
+            g = GF_heatbath(U0, g, action.betaMM, 1, action.hb_multi_hit)
+        # print("average: ", np.log(ave/action.innerMC_N_H))
+        f.write("average: "+str(np.log(ave/action.innerMC_N_H))+ '\n')
+
+        f.write('-'*50 + '\n')
+
+    f.close()
     return U, P
 
 def cal_H(U, P, action, before_after, f=None):
@@ -38,44 +64,44 @@ def cal_H(U, P, action, before_after, f=None):
     return H0
 
 def HMC(U, trajN, trajL, MDsteps, action):
-    f = open(action.log_file, 'w+')
+    # f = open(action.log_file, 'w+')
     for traj in range(trajN):
         # print("traj: ", traj)
-        f.write("traj: "+str(traj) + '\n')
+        # f.write("traj: "+str(traj) + '\n')
         P = generate_P(U.shape[1:5])
 
         # H0 = cal_H(U, P, action, 0)
-        H0 = cal_H(U, P, action, 0, f)
+        # H0 = cal_H(U, P, action, 0, f)
 
         newU, newP = integrate_LeapFrog(U, P, trajL, MDsteps, action)
 
         # H1 = cal_H(newU, newP, action, 1)
-        H1 = cal_H(newU, newP, action, 1, f)
-        deltaH = H1 - H0
+        # H1 = cal_H(newU, newP, action, 1, f)
+        # deltaH = H1 - H0
         # print("delta H: ", deltaH)
-        f.write("delta H: "+str(deltaH)+ '\n')
+        # f.write("delta H: "+str(deltaH)+ '\n')
 
         ave = 0
 
-        if action.name == "GFAction":
-            g = coldConfiguration(U.shape[1:])
-            g = GF_heatbath(U, g, action.betaMM, action.hb_offset, action.hb_multi_hit)
-            for i in range(action.innerMC_N_H):
-                tt = deltaH + action.betaMM * (Omega_g(newU, g) - Omega_g(U, g))
-                ave += np.exp(tt)
-                if i%30==0:
-                    # print("DeltaH tt: ", tt)
-                    f.write("DeltaH tt: "+str(tt)+ '\n')
-                g = GF_heatbath(U, g, action.betaMM, 1, action.hb_multi_hit)
-            # print("average: ", np.log(ave/action.innerMC_N_H))
-            f.write("average: "+str(np.log(ave/action.innerMC_N_H))+ '\n')
+        # if action.name == "GFAction":
+            # g = coldConfiguration(U.shape[1:])
+            # g = GF_heatbath(U, g, action.betaMM, action.hb_offset, action.hb_multi_hit)
+            # for i in range(action.innerMC_N_H):
+            #     tt = deltaH + action.betaMM * (Omega_g(newU, g) - Omega_g(U, g))
+            #     ave += np.exp(tt)
+            #     if i%30==0:
+            #         # print("DeltaH tt: ", tt)
+            #         f.write("DeltaH tt: "+str(tt)+ '\n')
+            #     g = GF_heatbath(U, g, action.betaMM, 1, action.hb_multi_hit)
+            # # print("average: ", np.log(ave/action.innerMC_N_H))
+            # f.write("average: "+str(np.log(ave/action.innerMC_N_H))+ '\n')
 
         # always accept
         U = newU
 
         # print("plaq: ", plaq_cal(newU))
         # print('-'*50)
-        f.write("plaq: " + str(plaq_cal(newU))+ '\n')
-        f.write('-'*50 + '\n')
+        # f.write("plaq: " + str(plaq_cal(newU))+ '\n')
+        # f.write('-'*50 + '\n')
 
-        f.close()
+        # f.close()

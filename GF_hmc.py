@@ -2,7 +2,7 @@ import numpy as np
 from QCD import *
 
 def log_name(M, trajL, innerMC_N_force, innerMC_N_H):
-    return "./data6.20_S10/" + str(M) + "_" + str(trajL) + ".txt"
+    return "./data6.20_S10_MC3000/" + str(M) + "_" + str(trajL) + ".txt"
     # return "./data6.19/" + str(M) + "_" + str(trajL) + "_" + str(innerMC_N_force) + "_" + str(innerMC_N_H) + ".txt"
 
 
