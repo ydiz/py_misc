@@ -1,7 +1,5 @@
 import numpy as np
 from .core import *
-# import psutil
-# import os
 
 pauli1 = np.array([[0, -1], [1,0]], dtype=np.complex128) # 2i * generator
 pauli2 = np.array([[0, 1j], [1j,0]], dtype=np.complex128)
@@ -54,10 +52,6 @@ def random_three_vector(mag, shape):
 
 # need grid
 def subGroupHeatBath(g, bare_staple, betaMM, su2_index, mask, nheatbath=5):
-    # p = psutil.Process()
-    # print(p.cpu_affinity())
-    # affinity.get_process_affinity_mask(0)
-    # os.system("taskset -p 0xff %d" % os.getpid())
 
     grid = g.shape[:4]
     staple = bare_staple * betaMM
