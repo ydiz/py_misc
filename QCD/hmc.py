@@ -44,6 +44,9 @@ def HMC(U, trajN, trajL, MDsteps, action):
 
         newU, newP = integrate_LeapFrog(U, P, trajL, MDsteps, action)
 
+        with open("M1.0_S0.03.npy", "wb") as f:
+            np.save(f, newU)
+
         H1 = cal_H(newU, newP, action, 1)
         deltaH = H1 - H0
         print("delta H: ", deltaH)
@@ -53,14 +56,14 @@ def HMC(U, trajN, trajL, MDsteps, action):
         if action.name == "GFAction":
             g = coldConfiguration(U.shape[1:])
             g = GF_heatbath(U, g, action.betaMM, action.hb_offset, action.hb_multi_hit)
-            for i in range(action.innerMC_N):
+            for i in range(action.innerMC_N_H):
                 tt = deltaH + action.betaMM * (Omega_g(newU, g) - Omega_g(U, g))
                 ave += np.exp(tt)
                 if i%30==0:
                     print("DeltaH tt: ", tt)
                 g = GF_heatbath(U, g, action.betaMM, 1, action.hb_multi_hit)
 
-        print("averafe: ", np.log(ave/action.innerMC_N))
+        print("averafe: ", np.log(ave/action.innerMC_N_H))
 
         # always accept
         U = newU

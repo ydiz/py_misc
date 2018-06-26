@@ -9,11 +9,13 @@ def dOmegadU_g(U, g):
     return ret
 
 class GFAction:
-    def __init__(self, beta, M, innerMC_N=100, hb_offset=100, hb_multi_hit=10):
+    def __init__(self, beta, M, innerMC_N_force=100, innerMC_N_H=100, hb_offset=100, hb_multi_hit=10):
         self.beta = beta
         self.M = M
         self.betaMM = beta * M * M
-        self.innerMC_N = innerMC_N
+        # self.innerMC_N = innerMC_N
+        self.innerMC_N_force = innerMC_N_force
+        self.innerMC_N_H = innerMC_N_H
         self.hb_offset = hb_offset
         self.hb_multi_hit = hb_multi_hit
         self.name = "GFAction"
@@ -30,10 +32,10 @@ class GFAction:
         g = coldConfiguration(U.shape[1:])
         g = GF_heatbath(U, g, self.betaMM, self.hb_offset, self.hb_multi_hit)
 
-        for _ in range(self.innerMC_N):
+        for _ in range(self.innerMC_N_force):
             dSGF2dU += dOmegadU_g(U, g)
             g = GF_heatbath(U, g, self.betaMM, 1, self.hb_multi_hit)
-        dSGF2dU = factor / self.innerMC_N * dSGF2dU
+        dSGF2dU = factor / self.innerMC_N_force * dSGF2dU
 
         return dSwdU + dSGF1dU - dSGF2dU
 
