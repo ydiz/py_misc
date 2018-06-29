@@ -77,5 +77,6 @@ def HMC(U, trajN, trajL, MDsteps, action):
         # print('-'*50)
         f.write("plaq: " + str(plaq_cal(newU))+ '\n')
         f.write('-'*50 + '\n')
+        f.flush()
 
     f.close()
